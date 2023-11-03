@@ -12,7 +12,8 @@ Servo servoVertical;
 int anguloHorizontalInicial = 90; // Ángulo horizontal inicial
 int anguloVerticalInicial = 90;   // Ángulo vertical inicial
 // INCREMENTO
-int incrementoAngulo = 10;   
+int incrementoAngulo = 5;   
+int ultimaTeclaPresionada = 0;
 
 void setup()
 {
@@ -33,66 +34,49 @@ void setup()
 
 void loop(){
   
-   if (IrReceiver.decode())
-   {
-      //VALOR DE ENTRADA
-      int valor = IrReceiver.decodedIRData.command;
-      // DATA DE DIRECCIÓN
-      String direccion;
+  // Control del servoHorizontal con el receptor IR
+  if (IrReceiver.decode()) {
+    int valor = IrReceiver.decodedIRData.command;
 
-      //CONTROL ======================================================================================
-
-      // Derecha ----------------------------------------------
-      if (valor == 67)  
-        {
-          anguloHorizontalInicial += incrementoAngulo;
-          if (anguloHorizontalInicial  > 180) {
-            anguloHorizontalInicial = 180;
-          }
-            
-          servoHorizontal.write(anguloHorizontalInicial);
-          direccion = "Derecha  (ángulo: " + String(anguloHorizontalInicial) + ")";
+    if (valor == 67) {
+      // Derecha
+      anguloHorizontalInicial += incrementoAngulo;
+      if (anguloHorizontalInicial > 180) {
+        anguloHorizontalInicial = 180;
+      }
+      ultimaTeclaPresionada = 67; // Actualiza la última tecla
+    } else if (valor == 68) {
+      // Izquierda
+      anguloHorizontalInicial -= incrementoAngulo;
+      if (anguloHorizontalInicial < 0) {
+        anguloHorizontalInicial = 0;
+      }
+      ultimaTeclaPresionada = 68; // Actualiza la última tecla
+    } else if (valor == 0) {
+      // Si el valor es 0, mueve en la dirección de la última tecla presionada
+      if (ultimaTeclaPresionada == 67) {
+        anguloHorizontalInicial += incrementoAngulo;
+        if (anguloHorizontalInicial > 180) {
+          anguloHorizontalInicial = 180;
         }
-
-      // Izquierda ----------------------------------------------
-      else if (valor == 68)  
-        {
-          anguloHorizontalInicial -= incrementoAngulo;
-          if (anguloHorizontalInicial < 0) {
-            anguloHorizontalInicial = 0;
-          }
-          servoHorizontal.write(anguloHorizontalInicial);
-          direccion = "Izquierda (ángulo: " + String(anguloHorizontalInicial) + ")";
+      } else if (ultimaTeclaPresionada == 68) {
+        anguloHorizontalInicial -= incrementoAngulo;
+        if (anguloHorizontalInicial < 0) {
+          anguloHorizontalInicial = 0;
         }
+      }
+    }
 
-      // Arriba ----------------------------------------------
-      else if (valor == 70)  
-        {
-          anguloVerticalInicial += incrementoAngulo;
-          if (anguloVerticalInicial > 180) {
-            anguloVerticalInicial = 180;
-          }
-          servoVertical.write(anguloVerticalInicial);
-          direccion = "Arriba (ángulo: " + String(anguloVerticalInicial) + ")";
-        }
+    servoHorizontal.write(anguloHorizontalInicial);
 
-      // Abajo ----------------------------------------------
-      else if (valor == 21)  
-        {
-          anguloVerticalInicial -= incrementoAngulo;
-          if (anguloVerticalInicial < 0) {
-            anguloVerticalInicial = 0;
-          }
-          servoVertical.write(anguloVerticalInicial);
-          direccion = "Abajo (ángulo: " + String(anguloVerticalInicial) + ")";
-        }
-      else
-        {
-          direccion = "Desconocida";
-        }
-      
-      Serial.println("Dirección: " + direccion);
+    Serial.print("Dirección: ");
+    Serial.print((ultimaTeclaPresionada == 67) ? "Derecha" : "Izquierda");
+    Serial.print(", Ángulo: ");
+    Serial.println(anguloHorizontalInicial);
 
-      IrReceiver.resume();
-   }
+    Serial.print("Valor IR recibido: ");
+    Serial.println(valor);
+
+    IrReceiver.resume(); // Continuar escuchando
+  }
 }
